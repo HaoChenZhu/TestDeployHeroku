@@ -1,0 +1,8 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb+srv://user:user@cluster0.gw7id.mongodb.net/qrnotify?retryWrites=true&w=majority
+server:
+  port: 8080
+chen:
+  base_path: /nebrija/qrnotify-pruebas

@@ -1,0 +1,354 @@
+openapi: 3.0.3
+info:
+  title: test
+  description: proyecto back test para qrnotify
+  version: 1.0.0
+servers:
+  -   url: '{protocol}://nebrija-example/{basePath}'
+      variables:
+        protocol:
+          enum:
+            - http
+            - https
+          default: https
+          description: This value is assigned by the transfer protocol that has to be used
+        basePath:
+          default: /clients/qrnotify
+tags:
+  - name: Test
+    description: Testing service
+  - name: User
+    description: Everything about users
+paths:
+  /test:
+    get:
+      tags:
+        - Test
+      summary: Prueba test
+      description: Prueba test
+      operationId: test
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/general_response'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error_dto'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error_dto'
+        '405':
+          description: Method call not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error_dto'
+        '500':
+          description: Internal Server Error ETNA
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error_dto'
+        '503':
+          description: Internal ETNA storage system error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error_dto'
+      security:
+        -   default: [ ]
+      x-auth-type: Application & Application User
+      x-throttling-tier: Unlimited
+  /user:
+    get:
+      tags:
+        - User
+      summary: Prueba test
+      description: Prueba test
+      operationId: getUsers
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/pages_test_response_dto'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error_dto'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error_dto'
+        '405':
+          description: Method call not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error_dto'
+        '500':
+          description: Internal Server Error ETNA
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error_dto'
+        '503':
+          description: Internal ETNA storage system error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error_dto'
+      security:
+        -   default: [ ]
+      x-auth-type: Application & Application User
+      x-throttling-tier: Unlimited
+    post:
+      tags:
+        - User
+      summary: Create a new User
+      description: Create new User
+      operationId: postUsers
+      requestBody:
+        description: user info
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user_request_dto'
+      responses:
+        '201':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/pages_test_response_dto'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error_dto'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error_dto'
+        '405':
+          description: Method call not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error_dto'
+        '500':
+          description: Internal Server Error ETNA
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error_dto'
+        '503':
+          description: Internal ETNA storage system error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error_dto'
+      security:
+        -   default: [ ]
+      x-auth-type: Application & Application User
+      x-throttling-tier: Unlimited
+components:
+  schemas:
+    pages_test_response_dto:
+      title: Page test response
+      type: object
+      properties:
+        business_object:
+          type: array
+          description: Fields
+          items:
+            $ref: '#/components/schemas/user_response_dto'
+        paging_object:
+          $ref: '#/components/schemas/pagination_object'
+        sorting_object:
+          $ref: '#/components/schemas/sorting_object'
+    pagination_object:
+      title: DTO Pagination
+      type: object
+      properties:
+        current_page:
+          type: integer
+          description: Current Page. The first page is 0
+          format: int32
+          example: 0
+        is_last_page:
+          type: boolean
+          description: Number of elements of collection
+          example: false
+        page_elements:
+          type: integer
+          description: Number of elements to show on current page
+          format: int64
+        page_size:
+          type: integer
+          description: Number of elements to show on page
+          format: int32
+          example: 10
+        total_elements:
+          type: integer
+          description: Number of elements of collection
+          format: int64
+        total_pages:
+          type: integer
+          description: Total number of pages
+          format: int32
+      description: DTO Pagination
+    sorting_object:
+      title: DTO Sorting
+      type: object
+      properties:
+        direction:
+          type: string
+          description: Sense of orientation
+        property:
+          type: string
+          description: Value by which the displayed page is sorted
+      description: DTO Sorting
+    general_response:
+      title: object of general response
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          type: string
+          description: Service return codigo.
+        message:
+          type: string
+          description: Description of the result of the operation performed
+    error:
+      title: Error en la aplicacion
+      required:
+        - code
+        - message
+        - request_id
+      type: object
+      properties:
+        code:
+          type: string
+          description: C�digo del resultado erroneo
+        message:
+          type: string
+          description: Descripcion del resultado erroneo
+        request_id:
+          type: string
+          description: Codigo de peticion unico.
+        details:
+          type: object
+          properties: { }
+          description: objeto con el detalle adicional de errores que desee aportar
+    error_response:
+      title: Error en la aplicacion encapsulado
+      required:
+        - error
+      type: object
+      properties:
+        error:
+          $ref: '#/components/schemas/error'
+    user_request_dto:
+      type: object
+      properties:
+        username:
+          type: string
+          example: theUser
+        email:
+          type: string
+          example: john@email.com
+        phone:
+          type: string
+          example: '12345'
+    user_response_dto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: int64
+          example: 10
+        username:
+          type: string
+          example: theUser
+        email:
+          type: string
+          example: john@email.com
+        phone:
+          type: string
+          example: '12345'
+        date_created:
+          type: string
+    error_dto:
+      title: DTO Error
+      type: object
+      properties:
+        message:
+          type: string
+        request_id:
+          type: string
+        details:
+          type: string
+        code:
+          type: string
+  responses:
+    '200':
+      description: successful operation
+      content:
+        '*/*':
+          schema:
+            $ref: '#/components/schemas/general_response'
+    '400':
+      description: There was something wrong in the request and therefore could not be processed (headers, json syntax/content)
+      content:
+        '*/*':
+          schema:
+            $ref: '#/components/schemas/error_response'
+    '404':
+      description: The server can not find the requested
+      content:
+        '*/*':
+          schema:
+            $ref: '#/components/schemas/error_response'
+    '500':
+      description: Unknown Internal server error
+      content:
+        '*/*':
+          schema:
+            $ref: '#/components/schemas/error_response'
+    '501':
+      description: The request was not completed. The server did not support the functionality required
+      content:
+        '*/*':
+          schema:
+            $ref: '#/components/schemas/error_response'
+  securitySchemes:
+    WSO2:
+      type: apiKey
+      name: Authorization
+      in: header
+    default:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://wso2-apigw/authorize
+          scopes: { }
