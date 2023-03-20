@@ -6,3 +6,10 @@ server:
   port: 8080
 chen:
   base_path: /nebrija/qrnotify-pruebas
+
+qrnotify:
+  broker:
+    host: ssl://localhost:8883
+    user: hchenz
+    password: 123456789
+    cert: src/main/resources/certifications/ca.crt

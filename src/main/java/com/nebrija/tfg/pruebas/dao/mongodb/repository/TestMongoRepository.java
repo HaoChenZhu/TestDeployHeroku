@@ -7,5 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TestMongoRepository extends MongoRepository<Test, ObjectId> {
-
+    Test findBy_id(ObjectId _id);
 }
