@@ -9,7 +9,7 @@ chen:
 
 qrnotify:
   broker:
-    host: ssl://localhost:8883
-    user: hchenz
-    password: 123456789
-    cert: src/main/resources/certifications/ca.crt
+    host: ssl://80iqd8.stackhero-network.com:8883
+    user: admin
+    password: iRgOP5bibBMsFsuHDtI8I8yPNhSlC0th
+    cert: src/main/resources/certifications/ca.pem

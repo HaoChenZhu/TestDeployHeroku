@@ -7,7 +7,7 @@ chen:
 
 qrnotify:
   broker:
-    host: ${MQTT_BROKER_URL:ssl://localhost:8883} # Utiliza la variable de entorno MQTT_BROKER_URL o ssl://localhost:8883 como predeterminado
-    user: ${MQTT_USERNAME:hchenz} # Utiliza la variable de entorno MQTT_USERNAME o hchenz como predeterminado
-    password: ${MQTT_PASSWORD:123456789} # Utiliza la variable de entorno MQTT_PASSWORD o 123456789 como predeterminado
-    cert: src/main/resources/certifications/ca.crt
+    host: ${MQTT_BROKER_URL:ssl://80iqd8.stackhero-network.com:8883} # Utiliza la variable de entorno MQTT_BROKER_URL o ssl://localhost:8883 como predeterminado
+    user: ${MQTT_USERNAME:admin} # Utiliza la variable de entorno MQTT_USERNAME o hchenz como predeterminado
+    password: ${MQTT_PASSWORD:iRgOP5bibBMsFsuHDtI8I8yPNhSlC0th} # Utiliza la variable de entorno MQTT_PASSWORD o 123456789 como predeterminado
+    cert: src/main/resources/certifications/ca.pem
