@@ -1,14 +1,15 @@
 package com.nebrija.tfg.pruebas.config;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.eclipse.paho.mqttv5.client.MqttClient;
-import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
+import org.eclipse.paho.mqttv5.client.*;
 import org.eclipse.paho.mqttv5.client.persist.MemoryPersistence;
-import org.springframework.context.annotation.Bean;
+import org.eclipse.paho.mqttv5.common.MqttException;
+import org.eclipse.paho.mqttv5.common.MqttMessage;
+import org.eclipse.paho.mqttv5.common.packet.MqttProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.beans.factory.annotation.Value;
+import org.eclipse.paho.mqttv5.client.MqttDisconnectResponse;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -23,52 +24,132 @@ import java.security.Security;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.UUID;
+
 @Slf4j
 @Configuration
-public class MqttBeans {
+public class MqttBeans implements MqttCallback {
 
-    @Value("${qrnotify.broker.host}")
     private String host;
-    //    @Value("${etna.broker.clientId}")
-//    private String clientId;
-    @Value("${qrnotify.broker.user}")
     private String mqttUserName;
-    @Value("${qrnotify.broker.password}")
     private String mqttPassword;
-    @Value("${qrnotify.broker.cert}")
     private String caFilePath;
-    public MqttClient mqttClient() {
-        try{
-            String clientId = UUID.randomUUID().toString();
-            MqttClient client = new MqttClient(host, clientId, new MemoryPersistence());
+    private MemoryPersistence memoryPersistence;
+    private MqttConnectionOptions mqttConnectionOptions;
+    private MqttAsyncClient mqttAsyncClient;
 
-            MqttConnectionOptions options = new MqttConnectionOptions();
-            options.setUserName(mqttUserName);
+    public MqttBeans(@Value("${qrnotify.broker.host}") String host, @Value("${qrnotify.broker.user}") String mqttUserName, @Value("${qrnotify.broker.password}") String mqttPassword, @Value("${qrnotify.broker.cert}") String caFilePath) {
+        this.host = host;
+        this.mqttUserName = mqttUserName;
+        this.mqttPassword = mqttPassword;
+        this.caFilePath = caFilePath;
+        try {
+            memoryPersistence = new MemoryPersistence();
+            mqttConnectionOptions = new MqttConnectionOptions();
+            mqttAsyncClient = new MqttAsyncClient(host, UUID.randomUUID().toString(), memoryPersistence);
+            clientConnect();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            e.printStackTrace();
+        }
+    }
+    public void clientConnect() {
+        try {
+            mqttConnectionOptions.setUserName(mqttUserName);
             Charset utf8 = StandardCharsets.UTF_8;
             byte[] bytes = mqttPassword.getBytes(utf8);
-            options.setPassword(bytes);
-            options.setCleanStart(true);
-            options.setAutomaticReconnect(true);
-            options.setConnectionTimeout(90);
-            options.setKeepAliveInterval(90);
-
-          //  options.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE); // Agregue esta línea para desactivar la verificación del nombre de host en SSL/TLS
-
+            mqttConnectionOptions.setPassword(bytes);
+            mqttConnectionOptions.setCleanStart(true);
+            mqttConnectionOptions.setAutomaticReconnect(true);
+           /* mqttConnectionOptions.setConnectionTimeout(90);
+            mqttConnectionOptions.setKeepAliveInterval(90);*/
             log.info("Ruta certificado: " + caFilePath);
             SSLSocketFactory socketFactory = getSockFactory(caFilePath);
-            options.setSocketFactory(socketFactory);
+            mqttConnectionOptions.setSocketFactory(socketFactory);
             log.info("Mqtt conectando en el host: " + host);
-            client.connect(options);
+            mqttAsyncClient.connect(mqttConnectionOptions);
             log.info("Conectado a mqtt");
-            return client;
         } catch (Exception e) {
-            log.error(e.getMessage(),e);
+            log.error(e.getMessage(), e);
             e.printStackTrace();
-            return null;
         }
     }
 
-    private static SSLSocketFactory getSockFactory(String caFile) throws Exception{
+    public void subscribe(String topic, int qos) {
+        try {
+            mqttAsyncClient.subscribe(topic, qos);
+            log.info("Subscrito a topic: " + topic);
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            e.printStackTrace();
+        }
+    }
+
+    public void publish(String topic, String message, int qos, Long expirationTime) {
+        try {
+            //IMqttToken token = null;
+            MqttMessage mqttMessage = new MqttMessage();
+            mqttMessage.setPayload(message.getBytes());
+            mqttMessage.setQos(qos);
+            mqttMessage.setRetained(false);
+            mqttMessage.setDuplicate(false);
+            MqttProperties mqttProperties = new MqttProperties();
+            mqttProperties.setMessageExpiryInterval(expirationTime);
+            mqttMessage.setProperties(mqttProperties);
+            mqttAsyncClient.publish(topic, mqttMessage);
+            //Wait for the publish to complete
+            //token.waitForCompletion();
+            log.info("Publicado en topic: " + topic);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            e.printStackTrace();
+        }
+    }
+    public void disconnect(){
+        try{
+            if(mqttAsyncClient != null){
+                mqttAsyncClient.disconnect();
+                log.info("Desconectado de mqtt");
+            }
+        }catch (Exception e){
+            log.error(e.getMessage(), e);
+            e.printStackTrace();
+        }
+    }
+    @Override
+    public void disconnected(MqttDisconnectResponse mqttDisconnectResponse) {
+        log.info("connection lost");
+        disconnect();
+    }
+
+    @Override
+    public void mqttErrorOccurred(MqttException e) {
+        log.info("mqttErrorOccurred: "+ e.getMessage());
+    }
+
+    @Override
+    public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
+        log.info("Message received: Topic: " + topic + " - Message: " + new String(mqttMessage.getPayload()));
+        System.out.println("Message received: Topic: " + topic + " - Message: " + new String(mqttMessage.getPayload()));
+
+    }
+
+    @Override
+    public void deliveryComplete(IMqttToken iMqttToken) {
+        log.info("deliveryComplete");
+    }
+
+    @Override
+    public void connectComplete(boolean b, String s) {
+        log.info("connectComplete");
+    }
+
+    @Override
+    public void authPacketArrived(int i, MqttProperties mqttProperties) {
+        log.info("authPacketArrived");
+    }
+
+    private static SSLSocketFactory getSockFactory(String caFile) throws Exception {
         try {
             Security.addProvider(new BouncyCastleProvider());
 
@@ -107,4 +188,5 @@ public class MqttBeans {
             return null;
         }
     }
+
 }
