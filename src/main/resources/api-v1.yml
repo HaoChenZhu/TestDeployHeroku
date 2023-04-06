@@ -4,16 +4,16 @@ info:
   description: proyecto back test para qrnotify
   version: 1.0.0
 servers:
-  -   url: '{protocol}://nebrija-example/{basePath}'
-      variables:
-        protocol:
-          enum:
-            - http
-            - https
-          default: https
-          description: This value is assigned by the transfer protocol that has to be used
-        basePath:
-          default: /clients/qrnotify
+  - url: '{protocol}://nebrija-example/{basePath}'
+    variables:
+      protocol:
+        enum:
+          - http
+          - https
+        default: https
+        description: This value is assigned by the transfer protocol that has to be used
+      basePath:
+        default: /clients/qrnotify
 tags:
   - name: Test
     description: Testing service
@@ -65,7 +65,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/error_dto'
       security:
-        -   default: [ ]
+        - default: [ ]
       x-auth-type: Application & Application User
       x-throttling-tier: Unlimited
   /user:
@@ -113,7 +113,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/error_dto'
       security:
-        -   default: [ ]
+        - default: [ ]
       x-auth-type: Application & Application User
       x-throttling-tier: Unlimited
     post:
@@ -166,7 +166,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/error_dto'
       security:
-        -   default: [ ]
+        - default: [ ]
       x-auth-type: Application & Application User
       x-throttling-tier: Unlimited
 components:
@@ -280,6 +280,38 @@ components:
         phone:
           type: string
           example: '12345'
+    turn_response_dto:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 10
+        name:
+          type: string
+          example: theNameOfTheTurn
+        estimated_time:
+          type: number
+          example: '10'
+        turns:
+          type: array
+          items:
+            $ref: '#/components/schemas/client_turn_response_dto'
+    client_turn_response_dto:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 10
+        client_id:
+          type: string
+          example: theTurn
+        turn_number:
+          type: string
+          example: theTurnNumber
+        status:
+          type: string
+          example: theTurnStatus
+
     user_response_dto:
       type: object
       properties:

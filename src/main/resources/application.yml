@@ -1,15 +1,25 @@
 spring:
+  application:
+    name: qrnotify
+  profiles:
+    default: pruebas
   data:
     mongodb:
       uri: mongodb+srv://user:user@cluster0.gw7id.mongodb.net/qrnotify?retryWrites=true&w=majority
+logging:
+  level:
+    org.springframework.data.mongodb: TRACE
 server:
   port: 8080
 chen:
   base_path: /nebrija/qrnotify-pruebas
-
 qrnotify:
   broker:
-    host: ssl://80iqd8.stackhero-network.com:8883
+    host: ssl://b100db1d.ala.us-east-1.emqxsl.com:8883
     user: admin
-    password: iRgOP5bibBMsFsuHDtI8I8yPNhSlC0th
-    cert: src/main/resources/certifications/ca.pem
+    password: admin
+    cert: src/main/resources/certifications/ca.crt
+
+---
+---
+

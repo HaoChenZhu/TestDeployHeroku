@@ -1,15 +1,18 @@
 package com.nebrija.tfg.pruebas.config;
 
+import com.nebrija.tfg.pruebas.services.impl.PushCallBack;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.eclipse.paho.mqttv5.client.*;
 import org.eclipse.paho.mqttv5.client.persist.MemoryPersistence;
 import org.eclipse.paho.mqttv5.common.MqttException;
 import org.eclipse.paho.mqttv5.common.MqttMessage;
+import org.eclipse.paho.mqttv5.common.MqttSubscription;
 import org.eclipse.paho.mqttv5.common.packet.MqttProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.beans.factory.annotation.Value;
 import org.eclipse.paho.mqttv5.client.MqttDisconnectResponse;
+import org.springframework.stereotype.Component;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -23,21 +26,25 @@ import java.security.KeyStore;
 import java.security.Security;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.UUID;
+
 
 @Slf4j
-@Configuration
-public class MqttBeans implements MqttCallback {
+@Component
+public class MqttBeans {
 
     private String host;
     private String mqttUserName;
     private String mqttPassword;
     private String caFilePath;
+    private String clientId;
     private MemoryPersistence memoryPersistence;
     private MqttConnectionOptions mqttConnectionOptions;
     private MqttAsyncClient mqttAsyncClient;
+    private String messageReceived;
 
-    public MqttBeans(@Value("${qrnotify.broker.host}") String host, @Value("${qrnotify.broker.user}") String mqttUserName, @Value("${qrnotify.broker.password}") String mqttPassword, @Value("${qrnotify.broker.cert}") String caFilePath) {
+
+
+    public MqttBeans(@Value("${qrnotify.broker.host}") String host, @Value("${qrnotify.broker.user}") String mqttUserName, @Value("${qrnotify.broker.password}") String mqttPassword, @Value("${qrnotify.broker.cert}") String caFilePath, @Value(value = "di") String clientId) {
         this.host = host;
         this.mqttUserName = mqttUserName;
         this.mqttPassword = mqttPassword;
@@ -45,7 +52,9 @@ public class MqttBeans implements MqttCallback {
         try {
             memoryPersistence = new MemoryPersistence();
             mqttConnectionOptions = new MqttConnectionOptions();
-            mqttAsyncClient = new MqttAsyncClient(host, UUID.randomUUID().toString(), memoryPersistence);
+            log.info("Client ID: " + clientId);
+            mqttAsyncClient = new MqttAsyncClient(host, clientId, memoryPersistence);
+            log.info("Mqtt conectando en el host: " + host);
             clientConnect();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -54,37 +63,40 @@ public class MqttBeans implements MqttCallback {
     }
     public void clientConnect() {
         try {
-            mqttConnectionOptions.setUserName(mqttUserName);
+            mqttConnectionOptions.setUserName(this.mqttUserName);
             Charset utf8 = StandardCharsets.UTF_8;
-            byte[] bytes = mqttPassword.getBytes(utf8);
+            byte[] bytes = this.mqttPassword.getBytes(utf8);
             mqttConnectionOptions.setPassword(bytes);
             mqttConnectionOptions.setCleanStart(true);
             mqttConnectionOptions.setAutomaticReconnect(true);
-           /* mqttConnectionOptions.setConnectionTimeout(90);
-            mqttConnectionOptions.setKeepAliveInterval(90);*/
+            mqttConnectionOptions.setConnectionTimeout(90);
+            mqttConnectionOptions.setKeepAliveInterval(90);
             log.info("Ruta certificado: " + caFilePath);
             SSLSocketFactory socketFactory = getSockFactory(caFilePath);
             mqttConnectionOptions.setSocketFactory(socketFactory);
             log.info("Mqtt conectando en el host: " + host);
             mqttAsyncClient.connect(mqttConnectionOptions);
             log.info("Conectado a mqtt");
+            Thread.sleep(5000); // wait until connection is complete
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             e.printStackTrace();
+
         }
     }
-
+    public String getClientId() {
+        return mqttAsyncClient.getClientId();
+    }
     public void subscribe(String topic, int qos) {
         try {
-            mqttAsyncClient.subscribe(topic, qos);
-            log.info("Subscrito a topic: " + topic);
-
+                mqttAsyncClient.subscribe(topic, qos);
+                mqttAsyncClient.setCallback( new PushCallBack(MqttBeans.this));
+                log.info("Subscrito a topic: " + topic);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             e.printStackTrace();
         }
     }
-
     public void publish(String topic, String message, int qos, Long expirationTime) {
         try {
             //IMqttToken token = null;
@@ -105,6 +117,7 @@ public class MqttBeans implements MqttCallback {
             e.printStackTrace();
         }
     }
+
     public void disconnect(){
         try{
             if(mqttAsyncClient != null){
@@ -116,37 +129,9 @@ public class MqttBeans implements MqttCallback {
             e.printStackTrace();
         }
     }
-    @Override
-    public void disconnected(MqttDisconnectResponse mqttDisconnectResponse) {
-        log.info("connection lost");
-        disconnect();
-    }
 
-    @Override
-    public void mqttErrorOccurred(MqttException e) {
-        log.info("mqttErrorOccurred: "+ e.getMessage());
-    }
-
-    @Override
-    public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
-        log.info("Message received: Topic: " + topic + " - Message: " + new String(mqttMessage.getPayload()));
-        System.out.println("Message received: Topic: " + topic + " - Message: " + new String(mqttMessage.getPayload()));
-
-    }
-
-    @Override
-    public void deliveryComplete(IMqttToken iMqttToken) {
-        log.info("deliveryComplete");
-    }
-
-    @Override
-    public void connectComplete(boolean b, String s) {
-        log.info("connectComplete");
-    }
-
-    @Override
-    public void authPacketArrived(int i, MqttProperties mqttProperties) {
-        log.info("authPacketArrived");
+    public String getMessageReceived() {
+        return messageReceived;
     }
 
     private static SSLSocketFactory getSockFactory(String caFile) throws Exception {
@@ -174,7 +159,6 @@ public class MqttBeans implements MqttCallback {
             } catch (Exception e) {
                 log.error("Problemas con la lectura del certificado");
             }
-
             TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             tmf.init(caKs);
 

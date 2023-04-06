@@ -25,7 +25,13 @@
             </timeBasedFileNamingAndTriggeringPolicy>
         </rollingPolicy>
     </appender>
-    <springProfile name="local">
+    <springProfile name="localhost">
+        <logger name="com.nebrija.tfg.pruebas" level="DEBUG"/>
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+    <springProfile name="pruebas">
         <logger name="com.nebrija.tfg.pruebas" level="DEBUG"/>
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
